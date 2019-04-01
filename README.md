@@ -19,7 +19,7 @@ python train.py gangan
 python figures.py
 ```
 
-Note: GANs are not the most stable training targets. The same is true for GAN-GAN. You should not expect to be able to reproduce the main figure exactly without some tweaking and searching over random seeds.
+Note: GANs are notoriously difficult to train. While the GAN training code is stable. the GAN-GAN code is not. Stability and convergence speed vary dramatically with random seed. While most runs yield something reasonable, you should not expect to reproduce our results exactly without a bit of patience and tweaking.
 
 # TL;DR
 
