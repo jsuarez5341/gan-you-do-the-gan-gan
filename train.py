@@ -9,10 +9,9 @@ import sys, os
 import torch
 from torch import nn
 
-from visualize import visualize
+from visualize import visualize, visGANGAN
 from gan import SimpleGAN, DCGAN
 import data, utils
-
 
 class GANTrainer:
    def __init__(self, gan, loader, datadir, lr=2e-4): 
@@ -68,8 +67,8 @@ class MNISTTrainer(GANTrainer):
           for x, _ in self.loader:
              if x.size(0) < self.batch:
                  continue
+             x = x.cuda()
              x = 2*(x - 0.5)
-             #x = x.cuda()
 
              dLoss, gLoss = self.step(x)
           self.loss.update(float(dLoss), float(gLoss))
@@ -84,20 +83,15 @@ class MNISTTrainer(GANTrainer):
 class GANGANTrainer(GANTrainer):
    def __init__(self, gan, loader, lr=2e-4): 
       super().__init__(gan, loader, lr)
+      self.noise = torch.randn(32, 64)
 
    def save(self, epoch):
       super().save(epoch)
-      #Sample a gan
       z = self.noise[0:1, :]
+      z = np.linspace(-2, 2, 16)
+      z = torch.Tensor(z).cuda().view(-1, 1)
       ganParams = self.gan.sample(z)
-      #model = torch.load('data/gan/0/model_24.pt')
-      #ganParams = utils.getParameters(model).cpu().data.numpy().reshape(1, -1)
-      gan = SimpleGAN(32*32, zdim=16, h=2, lr=2e-4)#.cuda()
-      utils.setParameters(gan, ganParams)
-      #gan = gan.cuda()
-      noise = gan.noise(64)
-      frame = visualize(gan, noise)
-
+      frame = visGANGAN(ganParams, self.noise)
 
    def train(self, epochs=25):
       for epoch in range(epochs):
@@ -105,32 +99,30 @@ class GANGANTrainer(GANTrainer):
              x = x[0]
              if x.size(0) < self.batch:
                  continue
-             #x = x.cuda()
+             x = x.cuda()
 
              dLoss, gLoss = self.step(x)
           self.loss.update(float(dLoss), float(gLoss))
           self.save(epoch)
 
 def trainGANs(n=100, datadir='data/gan/'):
-    for i in range(n):
-       print('Network: ' + str(i))
+    for i in range(11, n):
        try:
           os.mkdir(datadir+str(i))
        except FileExistsError:
           pass
-       loader = data.MNIST()
-       #model = SimpleGAN(32*32, zdim=16, h=2, lr=2e-4)#.cuda()
-       model = DCGAN(zdim=16, h=8, lr=2e-4)#.cuda()
+       loader = data.MNIST(batch=128)
+       model = SimpleGAN(28*28, zdim=64, hd=64, hg=64, lr=2e-4).cuda()
+       print('Network: ' + str(i) + ', Params: ' + str(utils.count_parameters(model)))
+       #model = DCGAN(zdim=16, h=4, lr=2e-4).cuda()
        trainer = MNISTTrainer(model, loader, datadir+str(i)+'/')
-       trainer.train()
+       trainer.train(epochs=100)
 
 def trainGANGAN(loaddir='data/gan/', savedir='data/gangan/'):
    print('Loading data...')
-   #loader = data.GANLoader(45, 25, loaddir)
-   loader = data.GANLoader(45, 10, loaddir)
+   loader = data.GANLoader(35, 100, loaddir)
    print('Loaded.')
-
-   model = SimpleGAN(69295, zdim=16, h=16, lr=2e-4)#.cuda()
+   model = SimpleGAN(113745, zdim=1, hd=8, hg=64, lr=2e-4).cuda()
    trainer = GANGANTrainer(model, loader, savedir)
    trainer.train(epochs=250)
 

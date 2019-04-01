@@ -5,6 +5,23 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+class LeakyReluLinear(nn.Module):
+   def __init__(self, xdim, h):
+      super().__init__()
+      self.linear    = nn.Linear(xdim, h)
+
+   def forward(self, x):
+      return F.leaky_relu(self.linear(x), 0.2)
+
+class LeakyReluBatchLinear(nn.Module):
+   def __init__(self, xdim, h):
+      super().__init__()
+      self.batchnorm = nn.BatchNorm1d(h)
+      self.linear    = nn.Linear(xdim, h)
+
+   def forward(self, x):
+      return F.leaky_relu(self.batchnorm(self.linear(x)), 0.2)
+
 def normal_init(m, mean, std):
     if isinstance(m, nn.ConvTranspose2d) or isinstance(m, nn.Conv2d):
         m.weight.data.normal_(mean, std)
@@ -23,8 +40,8 @@ class Discriminator(nn.Module):
 
    def loss(self, x, noise, G):
       D, batch = self, x.size(0)
-      zero = torch.zeros(batch, 1)#.cuda()
-      one = torch.ones(batch, 1)#.cuda()
+      zero = torch.zeros(batch, 1).cuda()
+      one = torch.ones(batch, 1).cuda()
 
       real = self.criterion(D(x), one)
       fake = self.criterion(D(G(noise)), zero)
@@ -38,7 +55,7 @@ class Generator(nn.Module):
 
    def loss(self, x, noise, D):
       G, batch = self, x.size(0)
-      one = torch.ones(batch, 1)#.cuda()
+      one = torch.ones(batch, 1).cuda()
 
       loss = self.criterion(D(G(noise)), one)
       return loss
@@ -46,16 +63,16 @@ class Generator(nn.Module):
 class SimpleGenerator(Generator):
    def __init__(self, xdim, zdim, h):
       super().__init__()
-      self.inp = nn.Linear(zdim, h)
-      self.hidden = nn.Linear(h, h)
+      self.inp = LeakyReluLinear(zdim, h)
+      self.hidden = LeakyReluLinear(h, h)
       self.out = nn.Linear(h, xdim)
       self.xdim = xdim
       self.zdim = zdim
 
    def forward(self, z):
       batch, x = z.size(0), z
-      x = F.leaky_relu(self.inp(x), 0.2)
-      x = F.leaky_relu(self.hidden(x), 0.2)
+      x = self.inp(x)
+      x = self.hidden(x)
       x = torch.tanh(self.out(x))
 
       x = x.view(batch, self.xdim)
@@ -64,8 +81,8 @@ class SimpleGenerator(Generator):
 class SimpleDiscriminator(Discriminator):
    def __init__(self, xdim, h):
       super().__init__()
-      self.inp = nn.Linear(xdim, h)
-      self.hidden = nn.Linear(h, h)
+      self.inp = LeakyReluLinear(xdim, h)
+      self.hidden = LeakyReluLinear(h, h)
       self.out = nn.Linear(h, 1)
 
    def forward(self, x):
@@ -73,8 +90,8 @@ class SimpleDiscriminator(Discriminator):
       batch = shape[0]
       x = x.view(batch, -1)
 
-      x = F.leaky_relu(self.inp(x), 0.2)
-      x = F.leaky_relu(self.hidden(x), 0.2)
+      x = self.inp(x)
+      x = self.hidden(x)
       x = torch.sigmoid(self.out(x))
       return x
 
@@ -154,14 +171,16 @@ class GAN(nn.Module):
       return a
 
    def sample(self, z):
+      #self.eval()
       x = self.generator(z)
       x = x.detach().cpu().numpy()
       if x.shape[1] == 1:
          x = x.squeeze(1)
+      #self.train()
       return x
 
    def noise(self, batch):
-      return torch.randn(batch, self.zdim)#.cuda()
+      return torch.randn(batch, self.zdim).cuda()
 
    def zero_grad(self):
       self.dOpt.zero_grad()
@@ -175,10 +194,10 @@ class GAN(nn.Module):
       return dLoss + gLoss
 
 class SimpleGAN(GAN):
-   def __init__(self, xdim, zdim=64, h=256, lr=2e-4):
+   def __init__(self, xdim, zdim=64, hd=256, hg=256, lr=2e-4):
       super().__init__(zdim)
-      self.discriminator = SimpleDiscriminator(xdim, h)
-      self.generator = SimpleGenerator(xdim, zdim, h)
+      self.discriminator = SimpleDiscriminator(xdim, hd)
+      self.generator = SimpleGenerator(xdim, zdim, hg)
 
 class DCGAN(GAN):
    def __init__(self, zdim=16, h=8, lr=2e-4):

@@ -19,6 +19,8 @@ python train.py gangan
 python figures.py
 ```
 
+Note: GANs are not the most stable training targets. The same is true for GAN-GAN. You should not expect to be able to reproduce the main figure exactly without some tweaking and searching over random seeds.
+
 # TL;DR
 
 GAN You Do the GAN-GAN? Yes you GAN! Generative models can model other generative models in an interpretable and meaningful latent space.
