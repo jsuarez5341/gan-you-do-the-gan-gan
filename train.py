@@ -106,7 +106,7 @@ class GANGANTrainer(GANTrainer):
           self.save(epoch)
 
 def trainGANs(n=100, datadir='data/gan/'):
-    for i in range(11, n):
+    for i in range(n):
        try:
           os.mkdir(datadir+str(i))
        except FileExistsError:
