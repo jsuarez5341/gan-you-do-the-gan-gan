@@ -2,7 +2,7 @@
 [gangan]: data/figures/gangan_sample.png
 
 # GAN You Do the GAN GAN?
-This repository contains the [Paper PDF](suarez_gangan.pdf), full source code, and sample models for the short paper GAN You Do the GAN GAN? in which we train a GAN over 100 snapshots from each of 35 trained GANs.
+This repository contains the [Paper PDF](suarez_gangan.pdf), full source code, and sample models for the short paper "GAN You Do the GAN GAN?" in which we train a GAN over 100 snapshots from each of 35 trained GANs.
 
 ## Quickstart
 We assume a standard Anaconda setup with GPU Pytorch installed. This is a minimal project with standard libraries -- if you are missing anything, snag it with pip. This project was conducted on a single desktop with a 6 core i7 and a GTX 1080 Ti. If training from scratch, expect to generate ~20GB of data.
