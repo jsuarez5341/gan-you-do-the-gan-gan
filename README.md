@@ -1,7 +1,7 @@
 [gan]: data/figures/gan_training.png
 [gangan]: data/figures/gangan_sample.png
 
-# GAN You Do the GAN GAN?
+# GAN You Do the GAN GAN? [arXiv](https://arxiv.org/abs/1904.00724)
 This repository contains the [Paper PDF](suarez_gangan.pdf), full source code, and sample models for the short paper "GAN You Do the GAN GAN?" in which we train a GAN over 100 snapshots from each of 35 trained GANs.
 
 ## Quickstart
